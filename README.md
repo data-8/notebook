@@ -1,4 +1,5 @@
 > This fork adds only one small script at /jupyter_notebook/static/notebook/js/ds10.js
+- By default, shift-enter runs all, in place.
 
 # Jupyter Notebook
 
