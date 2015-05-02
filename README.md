@@ -1,6 +1,6 @@
-> This fork contains one script, at /jupyter_notebook/static/notebook/js/ds10.js. With this script, DS10 Mode is the default; click on the checkmark in the toolbar to toggle this mode on/off. The following describes special features, in DS10 Mode.
+> This fork contains one script, at /jupyter_notebook/static/notebook/js/ds10.js. With this script, DS10 Mode is the default; click on the toolbar's checkmark to toggle this mode on/off. The following describes special features, in DS10 Mode.
 - By default, shift-enter runs all, in place.
-- Cells are selected
+- Cells are selected upon hover.
 - Only one mode -- edit mode -- exists, for simplicity.
 
 # Jupyter Notebook
