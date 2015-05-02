@@ -1,4 +1,4 @@
-> This fork adds only one small script at /jupyter_notebook/static/notebook/js/ds10.js
+> This fork adds only one small script at /jupyter_notebook/static/notebook/js/ds10.js. Toggle button in toolbar to turn on/off DS10 Mode. In this special mode:
 - By default, shift-enter runs all, in place.
 
 # Jupyter Notebook
