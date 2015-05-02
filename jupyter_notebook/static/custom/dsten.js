@@ -1,4 +1,4 @@
-/**
+/*
 
 Customized for Data Science 10
 taught by Professor DeNero
@@ -8,6 +8,28 @@ Modifications:
 1. By default, shift-enter runs all, in place. (bug: jumps down to bottom of page)
 
 */
+
+define([
+     'base/js/namespace',
+     'base/js/events'
+ ], function(IPython, events) {
+     events.on('app_initialized.NotebookApp', function(){
+         IPython.toolbar.add_buttons_group([
+             {
+                 'label'   : 'run qtconsole',
+                 'icon'    : 'fa-check-square-o', // select your icon from http://fortawesome.github.io/Font-Awesome/icons
+                 'callback': function () {
+                    var button = $(this).children('i');
+                     if (button.hasClass('fa-square-o')) {
+                        button.removeClass('fa-square-o').addClass('fa-check-square-o');
+                     } else {
+                        button.removeClass('fa-check-square-o').addClass('fa-square-o');
+                     }
+                 }
+             }
+             ]);
+     });
+});
 
 define([
     'base/js/namespace',
