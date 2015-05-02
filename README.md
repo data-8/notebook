@@ -1,3 +1,5 @@
+> This fork adds only one small script at /jupyter_notebook/static/notebook/js/ds10.js
+
 # Jupyter Notebook
 
 The Jupyter HTML notebook is a web-based notebook environment for interactive computing.
