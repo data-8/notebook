@@ -14,54 +14,51 @@ define([
      'base/js/events'
  ], function(IPython, events) {
      events.on('app_initialized.NotebookApp', function(){
-         IPython.toolbar.add_buttons_group([
-             {
-                 'label'   : 'run qtconsole',
-                 'icon'    : 'fa-check-square-o', // select your icon from http://fortawesome.github.io/Font-Awesome/icons
-                 'callback': function () {
+
+        window.ds10 = true;
+
+        IPython.toolbar.add_buttons_group([
+            {
+                'label'   : 'toggle DS10 mode',
+                'icon'    : 'fa-check-square-o', // select your icon from http://fortawesome.github.io/Font-Awesome/icons
+                'callback': function () {
                     var button = $(this).children('i');
-                     if (button.hasClass('fa-square-o')) {
+                    if (button.hasClass('fa-square-o')) {
+                        window.ds10 = true;
                         button.removeClass('fa-square-o').addClass('fa-check-square-o');
-                     } else {
+                    } else {
+                        window.ds10 = false;
                         button.removeClass('fa-check-square-o').addClass('fa-square-o');
+                    }
+                }
+            }
+        ]);
+             
+         var arrShortCut = [{ name: 'shift-enter', key: 13, fx: shiftEnter }];
+         
+         var iShortCutControlKey = 16; // SHIFT;
+         var bIsControlKeyActived = false;
+
+         // http://www.sitepoint.com/jquery-capture-multiple-key-press-combinations/
+         $(document).keyup(function(e) {
+             if (e.which == iShortCutControlKey) bIsControlKeyActived = false;
+         }).keydown(function(e) {
+             if (e.which == iShortCutControlKey) bIsControlKeyActived = true;
+             if (bIsControlKeyActived == true && window.ds10) {
+                 jQuery.each(arrShortCut, function(i) {
+                     if (arrShortCut[i].key == e.which) {
+                         arrShortCut[i].fx(e);
+                         throw '';
                      }
-                 }
+                 });
              }
-             ]);
+         });
+
+         function shiftEnter(e) {
+             var cell = $('.cell.code_cell.selected');
+             $('#run_all_cells').click();
+             cell.click();
+             $(window).scrollTop(0);
+         }
      });
 });
-
-define([
-    'base/js/namespace',
-    'jquery',
-    'base/js/utils',
-    'base/js/keyboard',
-], function(IPython, $, utils, keyboard) {
-
-    var arrShortCut = [{ name: 'shift-enter', key: 13, fx: shiftEnter }];
-
-    var iShortCutControlKey = 16; // SHIFT;
-    var bIsControlKeyActived = false;
-
-    // http://www.sitepoint.com/jquery-capture-multiple-key-press-combinations/
-    $(document).keyup(function(e) {
-        if (e.which == iShortCutControlKey) bIsControlKeyActived = false;
-    }).keydown(function(e) {
-        if (e.which == iShortCutControlKey) bIsControlKeyActived = true;
-        if (bIsControlKeyActived == true) {
-            jQuery.each(arrShortCut, function(i) {
-                if (arrShortCut[i].key == e.which) {
-                    arrShortCut[i].fx(e);
-                    throw '';
-                }
-            });
-        }
-    });
-
-    function shiftEnter(e) {
-        var cell = $('.cell.code_cell.selected');
-        $('#run_all_cells').click();
-        cell.click();
-//        $(window).scrollTop(0);
-    }
-})
