@@ -23,6 +23,7 @@ require([
     'codemirror/lib/codemirror',
     'notebook/js/about',
     // only loaded, not used, please keep sure this is loaded last
+    'custom/dsten',
     'custom/custom'
 ], function(
     IPython, 

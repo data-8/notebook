@@ -80,13 +80,3 @@
  * @class customjs
  * @static
  */
- 
- // takes no effect - add to custom profile under /[USER]/.ipython/static/custom/custom.js
-  define([
-     'base/js/namespace',
-     'base/js/events'
- ], function(IPython, events) {
-     events.on('app_initialized.NotebookApp', function(){
-         require(['/static/custom/dsten.js'])
-     });
- });
