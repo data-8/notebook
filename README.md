@@ -1,4 +1,4 @@
-> This fork contains one script, at /jupyter_notebook/static/notebook/js/ds10.js. With this script, Simple Mode is the default; click on the "Simple Mode" button to toggle this mode on/off. The following describes special features, in Simple Mode.
+> This fork contains one script, at /notebook/static/notebook/js/dsten.js. With this script, Simple Mode is the default; click on the "Simple Mode" button to toggle this mode on/off. The following describes special features, in Simple Mode.
 - By default, shift-enter runs all cells.
 - Only one mode -- edit mode -- exists, for simplicity.
 - "Scratch cell" available as a sandbox environment to-go.
