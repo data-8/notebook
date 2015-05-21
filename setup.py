@@ -13,7 +13,7 @@
 
 from __future__ import print_function
 
-name = "jupyter_notebook"
+name = "notebook"
 
 #-----------------------------------------------------------------------------
 # Minimal Python version sanity check
@@ -146,9 +146,9 @@ install_requires = [
     'traitlets',
     'jupyter_core',
     'jupyter_client',
-    'jupyter_nbformat',
-    'jupyter_nbconvert',
-    'ipython_kernel', # bless IPython kernel for now
+    'nbformat',
+    'nbconvert',
+    'ipykernel', # bless IPython kernel for now
 ]
 extras_require = {
     ':sys_platform != "win32"': ['terminado>=0.3.3'],
