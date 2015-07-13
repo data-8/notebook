@@ -14,6 +14,10 @@ try:
     from http.client import responses
 except ImportError:
     from httplib import responses
+try:
+    from urllib.parse import urlparse # Py 3
+except ImportError:
+    from urlparse import urlparse # Py 2
 
 from jinja2 import TemplateNotFound
 from tornado import web
@@ -40,16 +44,24 @@ sys_info = json.dumps(get_sys_info())
 
 class AuthenticatedHandler(web.RequestHandler):
     """A RequestHandler with an authenticated user."""
+    
+    @property
+    def content_security_policy(self):
+        """The default Content-Security-Policy header
+        
+        Can be overridden by defining Content-Security-Policy in settings['headers']
+        """
+        return '; '.join([
+            "frame-ancestors 'self'",
+            # Make sure the report-uri is relative to the base_url
+            "report-uri " + url_path_join(self.base_url, csp_report_uri),
+        ])
 
     def set_default_headers(self):
         headers = self.settings.get('headers', {})
 
         if "Content-Security-Policy" not in headers:
-            headers["Content-Security-Policy"] = (
-                    "frame-ancestors 'self'; "
-                    # Make sure the report-uri is relative to the base_url
-                    "report-uri " + url_path_join(self.base_url, csp_report_uri) + ";"
-            )
+            headers["Content-Security-Policy"] = self.content_security_policy
 
         # Allow for overriding headers
         for header_name,value in headers.items() :
@@ -165,10 +177,6 @@ class IPythonHandler(AuthenticatedHandler):
     @property
     def contents_manager(self):
         return self.settings['contents_manager']
-    
-    @property
-    def cluster_manager(self):
-        return self.settings['cluster_manager']
     
     @property
     def session_manager(self):
@@ -305,7 +313,66 @@ class IPythonHandler(AuthenticatedHandler):
             html = self.render_template('error.html', **ns)
         
         self.write(html)
+
+
+class APIHandler(IPythonHandler):
+    """Base class for API handlers"""
+    
+    def check_origin(self):
+        """Check Origin for cross-site API requests.
         
+        Copied from WebSocket with changes:
+        
+        - allow unspecified host/origin (e.g. scripts)
+        """
+        if self.allow_origin == '*':
+            return True
+
+        host = self.request.headers.get("Host")
+        origin = self.request.headers.get("Origin")
+
+        # If no header is provided, assume it comes from a script/curl.
+        # We are only concerned with cross-site browser stuff here.
+        if origin is None or host is None:
+            return True
+        
+        origin = origin.lower()
+        origin_host = urlparse(origin).netloc
+        
+        # OK if origin matches host
+        if origin_host == host:
+            return True
+        
+        # Check CORS headers
+        if self.allow_origin:
+            allow = self.allow_origin == origin
+        elif self.allow_origin_pat:
+            allow = bool(self.allow_origin_pat.match(origin))
+        else:
+            # No CORS headers deny the request
+            allow = False
+        if not allow:
+            self.log.warn("Blocking Cross Origin API request.  Origin: %s, Host: %s",
+                origin, host,
+            )
+        return allow
+
+    def prepare(self):
+        if not self.check_origin():
+            raise web.HTTPError(404)
+        return super(APIHandler, self).prepare()
+
+    @property
+    def content_security_policy(self):
+        csp = '; '.join([
+                super(APIHandler, self).content_security_policy,
+                "default-src 'none'",
+            ])
+        return csp
+    
+    def finish(self, *args, **kwargs):
+        self.set_header('Content-Type', 'application/json')
+        return super(APIHandler, self).finish(*args, **kwargs)
 
 
 class Template404(IPythonHandler):
@@ -368,6 +435,7 @@ def json_errors(method):
         try:
             result = yield gen.maybe_future(method(self, *args, **kwargs))
         except web.HTTPError as e:
+            self.set_header('Content-Type', 'application/json')
             status = e.status_code
             message = e.log_message
             self.log.warn(message)
@@ -375,6 +443,7 @@ def json_errors(method):
             reply = dict(message=message, reason=e.reason)
             self.finish(json.dumps(reply))
         except Exception:
+            self.set_header('Content-Type', 'application/json')
             self.log.error("Unhandled error in API request", exc_info=True)
             status = 500
             message = "Unknown server error"
@@ -397,7 +466,7 @@ def json_errors(method):
 # to minimize subclass changes:
 HTTPError = web.HTTPError
 
-class FileFindHandler(web.StaticFileHandler):
+class FileFindHandler(IPythonHandler, web.StaticFileHandler):
     """subclass of StaticFileHandler for serving files from a search path"""
     
     # cache search results, don't search for files more than once
@@ -451,7 +520,7 @@ class FileFindHandler(web.StaticFileHandler):
         return super(FileFindHandler, self).validate_absolute_path(root, absolute_path)
 
 
-class ApiVersionHandler(IPythonHandler):
+class APIVersionHandler(APIHandler):
 
     @json_errors
     def get(self):
@@ -522,5 +591,5 @@ path_regex = r"(?P<path>(?:(?:/[^/]+)+|/?))"
 
 default_handlers = [
     (r".*/", TrailingSlashHandler),
-    (r"api", ApiVersionHandler)
+    (r"api", APIVersionHandler)
 ]

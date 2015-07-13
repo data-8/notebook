@@ -2,17 +2,19 @@
 // Distributed under the terms of the Modified BSD License.
 
 define([
-    'base/js/namespace',
     'jquery',
     'base/js/utils',
     'services/kernels/kernel',
-], function(IPython, $, utils, kernel) {
+], function($, utils, kernel) {
     "use strict";
 
     /**
      * Session object for accessing the session REST api. The session
      * should be used to start kernels and then shut them down -- for
      * all other operations, the kernel object should be used.
+     *
+     * Preliminary documentation for the REST API is at 
+     * https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping#sessions-api
      *
      * Options should include:
      *  - notebook_path: the path (not including name) to the notebook
@@ -309,11 +311,9 @@ define([
         this.name = "SessionAlreadyStarting";
         this.message = (message || "");
     };
+    
     SessionAlreadyStarting.prototype = Error.prototype;
     
-    // For backwards compatability.
-    IPython.Session = Session;
-
     return {
         Session: Session,
         SessionAlreadyStarting: SessionAlreadyStarting

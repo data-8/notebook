@@ -1,4 +1,7 @@
-"""Tornado handlers for the sessions web service."""
+"""Tornado handlers for the sessions web service.
+
+Preliminary documentation at https://github.com/ipython/ipython/wiki/IPEP-16%3A-Notebook-multi-directory-dashboard-and-URL-mapping#sessions-api
+"""
 
 # Copyright (c) Jupyter Development Team.
 # Distributed under the terms of the Modified BSD License.
@@ -7,13 +10,13 @@ import json
 
 from tornado import web
 
-from ...base.handlers import IPythonHandler, json_errors
+from ...base.handlers import APIHandler, json_errors
 from jupyter_client.jsonutil import date_default
 from notebook.utils import url_path_join, url_escape
 from jupyter_client.kernelspec import NoSuchKernel
 
 
-class SessionRootHandler(IPythonHandler):
+class SessionRootHandler(APIHandler):
 
     @web.authenticated
     @json_errors
@@ -71,7 +74,7 @@ class SessionRootHandler(IPythonHandler):
         self.set_header('Access-Control-Allow-Headers', 'accept, content-type')
         self.finish()
 
-class SessionHandler(IPythonHandler):
+class SessionHandler(APIHandler):
 
     SUPPORTED_METHODS = ('GET', 'PATCH', 'DELETE')
 

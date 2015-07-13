@@ -663,7 +663,12 @@ define([
                         return false;
                     }
                 });
-                input.focus().select();
+                input.focus();
+                if (input.val().indexOf(".") > 0) {
+                    input[0].setSelectionRange(0,input.val().indexOf("."));
+                } else {
+                    input.select();
+                }
             }
         });
     };
@@ -873,10 +878,6 @@ define([
             .append(upload_button)
             .append(cancel_button);
     };
-
-
-    // Backwards compatability.
-    IPython.NotebookList = NotebookList;
 
     return {'NotebookList': NotebookList};
 });

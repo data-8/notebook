@@ -2,14 +2,13 @@
 // Distributed under the terms of the Modified BSD License.
 
 define([
-    'base/js/namespace',
     'jqueryui',
     'base/js/utils',
     'base/js/security',
     'base/js/keyboard',
     'notebook/js/mathjaxutils',
     'components/marked/lib/marked',
-], function(IPython, $, utils, security, keyboard, mathjaxutils, marked) {
+], function($, utils, security, keyboard, mathjaxutils, marked) {
     "use strict";
 
     /**
@@ -775,23 +774,23 @@ define([
             $("<div/>")
             .addClass("box-flex1 output_subarea raw_input_container")
             .append(
-                $("<span/>")
+                $("<pre/>")
                 .addClass("raw_input_prompt")
                 .text(content.prompt)
-            )
-            .append(
-                $("<input/>")
-                .addClass("raw_input")
-                .attr('type', input_type)
-                .attr("size", 47)
-                .keydown(function (event, ui) {
-                    // make sure we submit on enter,
-                    // and don't re-execute the *cell* on shift-enter
-                    if (event.which === keyboard.keycodes.enter) {
-                        that._submit_raw_input();
-                        return false;
-                    }
-                })
+                .append(
+                    $("<input/>")
+                    .addClass("raw_input")
+                    .attr('type', input_type)
+                    .attr("size", 47)
+                    .keydown(function (event, ui) {
+                        // make sure we submit on enter,
+                        // and don't re-execute the *cell* on shift-enter
+                        if (event.which === keyboard.keycodes.enter) {
+                            that._submit_raw_input();
+                            return false;
+                        }
+                    })
+                )
             )
         );
         
@@ -808,7 +807,7 @@ define([
 
     OutputArea.prototype._submit_raw_input = function (evt) {
         var container = this.element.find("div.raw_input_container");
-        var theprompt = container.find("span.raw_input_prompt");
+        var theprompt = container.find("pre.raw_input_prompt");
         var theinput = container.find("input.raw_input");
         var value = theinput.val();
         var echo  = value;
@@ -961,9 +960,6 @@ define([
         "application/javascript" : append_javascript,
         "application/pdf" : append_pdf
     };
-
-    // For backwards compatability.
-    IPython.OutputArea = OutputArea;
 
     return {'OutputArea': OutputArea};
 });

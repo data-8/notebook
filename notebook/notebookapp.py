@@ -52,6 +52,7 @@ from tornado.log import LogFormatter, app_log, access_log, gen_log
 from notebook import (
     DEFAULT_STATIC_FILES_PATH,
     DEFAULT_TEMPLATE_PATH_LIST,
+    __version__,
 )
 from .base.handlers import Template404
 from .log import log_request
@@ -59,7 +60,6 @@ from .services.kernels.kernelmanager import MappingKernelManager
 from .services.config import ConfigManager
 from .services.contents.manager import ContentsManager
 from .services.contents.filemanager import FileContentsManager
-from .services.clusters.clustermanager import ClusterManager
 from .services.sessions.sessionmanager import SessionManager
 
 from .auth.login import LoginHandler
@@ -134,12 +134,12 @@ class DeprecationHandler(IPythonHandler):
 class NotebookWebApplication(web.Application):
 
     def __init__(self, ipython_app, kernel_manager, contents_manager,
-                 cluster_manager, session_manager, kernel_spec_manager,
+                 session_manager, kernel_spec_manager,
                  config_manager, log,
                  base_url, default_url, settings_overrides, jinja_env_options):
 
         settings = self.init_settings(
-            ipython_app, kernel_manager, contents_manager, cluster_manager,
+            ipython_app, kernel_manager, contents_manager,
             session_manager, kernel_spec_manager, config_manager, log, base_url,
             default_url, settings_overrides, jinja_env_options)
         handlers = self.init_handlers(settings)
@@ -147,7 +147,7 @@ class NotebookWebApplication(web.Application):
         super(NotebookWebApplication, self).__init__(handlers, **settings)
 
     def init_settings(self, ipython_app, kernel_manager, contents_manager,
-                      cluster_manager, session_manager, kernel_spec_manager,
+                      session_manager, kernel_spec_manager,
                       config_manager,
                       log, base_url, default_url, settings_overrides,
                       jinja_env_options=None):
@@ -156,7 +156,7 @@ class NotebookWebApplication(web.Application):
             "template_path",
             ipython_app.template_file_path,
         )
-        if isinstance(_template_path, str):
+        if isinstance(_template_path, py3compat.string_types):
             _template_path = (_template_path,)
         template_path = [os.path.expanduser(path) for path in _template_path]
 
@@ -197,7 +197,6 @@ class NotebookWebApplication(web.Application):
             # managers
             kernel_manager=kernel_manager,
             contents_manager=contents_manager,
-            cluster_manager=cluster_manager,
             session_manager=session_manager,
             kernel_spec_manager=kernel_spec_manager,
             config_manager=config_manager,
@@ -233,7 +232,6 @@ class NotebookWebApplication(web.Application):
         handlers.extend(load_handlers('services.config.handlers'))
         handlers.extend(load_handlers('services.kernels.handlers'))
         handlers.extend(load_handlers('services.contents.handlers'))
-        handlers.extend(load_handlers('services.clusters.handlers'))
         handlers.extend(load_handlers('services.sessions.handlers'))
         handlers.extend(load_handlers('services.nbconvert.handlers'))
         handlers.extend(load_handlers('services.kernelspecs.handlers'))
@@ -272,7 +270,7 @@ class NotebookWebApplication(web.Application):
 
 
 class NbserverListApp(JupyterApp):
-    
+    version = __version__
     description="List currently running notebook servers in this profile."
     
     flags = dict(
@@ -344,7 +342,7 @@ aliases.update({
 class NotebookApp(JupyterApp):
 
     name = 'jupyter-notebook'
-    
+    version = __version__
     description = """
         The Jupyter HTML Notebook.
         
@@ -661,11 +659,6 @@ class NotebookApp(JupyterApp):
         config=True,
         help='The session manager class to use.'
     )
-    cluster_manager_class = Type(
-        default_value=ClusterManager,
-        config=True,
-        help='The cluster manager class to use.'
-    )
 
     config_manager_class = Type(
         default_value=ConfigManager,
@@ -803,11 +796,6 @@ class NotebookApp(JupyterApp):
             kernel_manager=self.kernel_manager,
             contents_manager=self.contents_manager,
         )
-        self.cluster_manager = self.cluster_manager_class(
-            parent=self,
-            log=self.log,
-        )
-
         self.config_manager = self.config_manager_class(
             parent=self,
             log=self.log,
@@ -841,7 +829,7 @@ class NotebookApp(JupyterApp):
         
         self.web_app = NotebookWebApplication(
             self, self.kernel_manager, self.contents_manager,
-            self.cluster_manager, self.session_manager, self.kernel_spec_manager,
+            self.session_manager, self.kernel_spec_manager,
             self.config_manager,
             self.log, self.base_url, self.default_url, self.tornado_settings,
             self.jinja_environment_options
@@ -907,7 +895,7 @@ class NotebookApp(JupyterApp):
             log("Terminals not available (error was %s)", e)
 
     def init_signal(self):
-        if not sys.platform.startswith('win'):
+        if not sys.platform.startswith('win') and sys.stdin.isatty():
             signal.signal(signal.SIGINT, self._handle_sigint)
         signal.signal(signal.SIGTERM, self._signal_stop)
         if hasattr(signal, 'SIGUSR1'):
@@ -978,12 +966,12 @@ class NotebookApp(JupyterApp):
             self.kernel_spec_manager.get_kernel_spec(NATIVE_KERNEL_NAME)
         except NoSuchKernel:
             try:
-                import ipykernel
+                from ipykernel.kernelspec import install
             except ImportError:
                 self.log.warn("IPython kernel not available")
             else:
                 self.log.warn("Installing IPython kernel spec")
-                self.kernel_spec_manager.install_native_kernel_spec(user=True)
+                install(kernel_spec_manager=self.kernel_spec_manager, user=True)
         
 
     def init_server_extensions(self):
@@ -1065,8 +1053,7 @@ class NotebookApp(JupyterApp):
         
         This method takes no arguments so all configuration and initialization
         must be done prior to calling this method."""
-        if self.subapp is not None:
-            return self.subapp.start()
+        super(NotebookApp, self).start()
 
         info = self.log.info
         for line in self.notebook_info().split("\n"):
